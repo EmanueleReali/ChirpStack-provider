@@ -5,9 +5,10 @@ metadata:
   name: example-provider-secret
 type: Opaque
 data:
-  # credentials: BASE64ENCODED_PROVIDER_CREDS
+  credentials: ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SmhkV1FpT2lKamFHbHljSE4wWVdOcklpd2lhWE56SWpvaVkyaHBjbkJ6ZEdGamF5SXNJbk4xWWlJNkltTTNNak0wTmpFeUxUaGpaV010TkRVek55MDVPV1l5TFRWbU16QTNNMk5qTUdJd1pTSXNJblI1Y0NJNkltdGxlU0o5LklFWWlBUFJMSmNPNlEzRWVtUU5rb08wQ1VHWVlReDg1UzhuSm9vS1pRMFE=
+  host : bG9jYWxob3N0OjgxMDA=
 ---
-apiVersion: template.crossplane.io/v1alpha1
+apiVersion: chirpstack.crossplane.io/v1alpha1
 kind: ProviderConfig
 metadata:
   name: example
@@ -18,3 +19,4 @@ spec:
       namespace: crossplane-system
       name: example-provider-secret
       key: credentials
+  host: localhost:8100

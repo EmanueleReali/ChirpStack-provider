@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.12.1
-  name: providerconfigs.template.crossplane.io
+  name: providerconfigs.chirpstack.crossplane.io
 spec:
-  group: template.crossplane.io
+  group: chirpstack.crossplane.io
   names:
     kind: ProviderConfig
     listKind: ProviderConfigList
@@ -25,7 +25,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A ProviderConfig configures a Template provider.
+        description: A ProviderConfig configures a ChirpStack provider.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -95,8 +95,11 @@ spec:
                 required:
                 - source
                 type: object
+              host:
+                type: string
             required:
             - credentials
+            - host
             type: object
           status:
             description: A ProviderConfigStatus reflects the observed state of a ProviderConfig.
