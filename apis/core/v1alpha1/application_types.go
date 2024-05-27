@@ -27,11 +27,11 @@ import (
 
 // ApplicationParameters are the configurable fields of a Application.
 type ApplicationParameters struct {
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"`
 	// Application description.
 	Description string `json:"description,omitempty"`
 	// Tenant ID (UUID).
-	TenantId string `json:"tenant_id,omitempty"`
+	TenantId string `json:"tenant_id"`
 	// Tags (user defined).
 	// These tags can be used to add additional information to the application.
 	// These tags are exposed in all the integration events of devices under

@@ -112,7 +112,11 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 
 	cd := pc.Spec.Credentials
 	data, err := resource.CommonCredentialExtractor(ctx, cd.Source, c.kube, cd.CommonCredentialSelectors)
-	server := pc.Spec.Host
+	if err != nil {
+		return nil, errors.Wrap(err, errGetCreds)
+	}
+
+	server, err := resource.CommonCredentialExtractor(ctx, pc.Spec.Host.Source, c.kube, pc.Spec.Host.CommonCredentialSelectors)
 	if err != nil {
 		return nil, errors.Wrap(err, errGetCreds)
 	}
@@ -123,7 +127,7 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		// remove this when using TLS
 	}
-	conn, err := grpc.Dial(server, dialOpts...)
+	conn, err := grpc.Dial(string(server), dialOpts...)
 	svc := c.newClient(conn)
 	if err != nil {
 		return nil, errors.Wrap(err, errNewClient)
@@ -141,7 +145,7 @@ type external struct {
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	fmt.Printf("funzione observe chiamata\n")
+
 	cr, ok := mg.(*v1alpha1.Application)
 
 	if !ok {
@@ -169,8 +173,6 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(IsErrorNotFound, err), "can not get the application instance")
 	}
 
-	fmt.Printf("Observing: application: " + cr.Name + " with id: " + id + "\n")
-
 	if !reflect.DeepEqual(toApplicationParameters(resp.Application), cr.Spec.ForProvider) {
 		return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}, nil
 	}
@@ -178,7 +180,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 }
 
 func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	fmt.Printf("funzione create chiamata\n")
+
 	cr, ok := mg.(*v1alpha1.Application)
 
 	if !ok {
@@ -207,7 +209,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	fmt.Printf("funzione update chiamata\n")
+
 	cr, ok := mg.(*v1alpha1.Application)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotApplication)
@@ -233,7 +235,6 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
-	fmt.Printf("funzione delete chiamata\n")
 	cr, ok := mg.(*v1alpha1.Application)
 	if !ok {
 		return errors.New(errNotApplication)

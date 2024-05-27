@@ -30,7 +30,7 @@ type ProviderConfigSpec struct {
 	// Credentials required to authenticate to this provider.
 	Credentials ProviderCredentials `json:"credentials"`
 
-	Host string `json:"host"`
+	Host ProviderCredentials `json:"host"`
 }
 
 type ProviderHost struct {

@@ -22,6 +22,7 @@ import (
 
 	"github.com/crossplane/provider-chirpstack/internal/controller/application"
 	"github.com/crossplane/provider-chirpstack/internal/controller/config"
+	"github.com/crossplane/provider-chirpstack/internal/controller/gateway"
 )
 
 // Setup creates all ChirpStack controllers with the supplied logger and adds them to
@@ -30,6 +31,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
 		config.Setup,
 		application.Setup,
+		gateway.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

@@ -4,7 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.12.1
-  name: applications.core.chirpstack.crossplane.io
+  name: gateways.core.chirpstack.crossplane.io
 spec:
   group: core.chirpstack.crossplane.io
   names:
@@ -12,10 +12,10 @@ spec:
     - crossplane
     - managed
     - chirpstack
-    kind: Application
-    listKind: ApplicationList
-    plural: applications
-    singular: application
+    kind: Gateway
+    listKind: GatewayList
+    plural: gateways
+    singular: gateway
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -34,7 +34,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A Application is an example API type.
+        description: A Gateway is an example API type.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -49,7 +49,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: A ApplicationSpec defines the desired state of a Application.
+            description: A GatewaySpec defines the desired state of a Gateway.
             properties:
               deletionPolicy:
                 default: Delete
@@ -65,26 +65,60 @@ spec:
                 - Delete
                 type: string
               forProvider:
-                description: ApplicationParameters are the configurable fields of
-                  a Application.
+                description: GatewayParameters are the configurable fields of a Gateway.
                 properties:
                   description:
-                    description: Application description.
+                    description: Description.
                     type: string
+                  gateway_id:
+                    description: Gateway ID (EUI64).
+                    type: string
+                  location:
+                    description: Gateway location.
+                    properties:
+                      accuracy:
+                        description: Accuracy.
+                        type: string
+                      altitude:
+                        description: Altitude.
+                        type: string
+                      latitude:
+                        description: Latitude.
+                        type: string
+                      longitude:
+                        description: Longitude.
+                        type: string
+                      source:
+                        description: Location source.
+                        format: int32
+                        type: integer
+                    type: object
+                  metadata:
+                    additionalProperties:
+                      type: string
+                    description: Metadata (provided by the gateway).
+                    type: object
                   name:
+                    description: Name.
                     type: string
+                  stats_interval:
+                    description: Stats interval (seconds). This defines the expected
+                      interval in which the gateway sends its statistics.
+                    format: int32
+                    type: integer
                   tags:
                     additionalProperties:
                       type: string
-                    description: Tags (user defined). These tags can be used to add
-                      additional information to the application. These tags are exposed
-                      in all the integration events of devices under this application.
+                    description: Tags.
                     type: object
                   tenant_id:
                     description: Tenant ID (UUID).
                     type: string
                 required:
+                - gateway_id
+                - location
                 - name
+                - stats_interval
                 - tenant_id
                 type: object
               managementPolicies:
@@ -285,13 +319,12 @@ spec:
             - forProvider
             type: object
           status:
-            description: A ApplicationStatus represents the observed state of a Application.
+            description: A GatewayStatus represents the observed state of a Gateway.
             properties:
               atProvider:
-                description: ApplicationObservation are the observable fields of a
-                  Application.
+                description: GatewayObservation are the observable fields of a Gateway.
                 properties:
-                  ConfigurableField:
+                  observableField:
                     type: string
                 type: object
               conditions:

@@ -19,4 +19,9 @@ spec:
       namespace: crossplane-system
       name: example-provider-secret
       key: credentials
-  host: localhost:8100
+  host:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: example-provider-secret
+      key: host
