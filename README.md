@@ -21,7 +21,7 @@ with the following features that are meant to be refactored:
 4. Add your new type by running the following command:
 ```shell
   export group=core # lower case e.g. core, cache, database, storage, etc.
-  export type=Application # Camel casee.g. Bucket, Database, CacheCluster, etc.
+  export type=DeviceProfile # Camel casee.g. Bucket, Database, CacheCluster, etc.
   make provider.addtype provider=${provider_name} group=${group} kind=${type}
 ```
 5. Replace the *sample* group with your new group in apis/{provider}.go

@@ -28,6 +28,15 @@ func (l *ApplicationList) GetItems() []resource.Managed {
 	return items
 }
 
+// GetItems of this DeviceProfileList.
+func (l *DeviceProfileList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
 // GetItems of this GatewayList.
 func (l *GatewayList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))

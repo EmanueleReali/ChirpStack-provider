@@ -1,0 +1,600 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.12.1
+  name: deviceprofiles.core.chirpstack.crossplane.io
+spec:
+  group: core.chirpstack.crossplane.io
+  names:
+    categories:
+    - crossplane
+    - managed
+    - chirpstack
+    kind: DeviceProfile
+    listKind: DeviceProfileList
+    plural: deviceprofiles
+    singular: deviceprofile
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Synced')].status
+      name: SYNCED
+      type: string
+    - jsonPath: .metadata.annotations.crossplane\.io/external-name
+      name: EXTERNAL-NAME
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: A DeviceProfile is an example API type.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: A DeviceProfileSpec defines the desired state of a DeviceProfile.
+            properties:
+              deletionPolicy:
+                default: Delete
+                description: 'DeletionPolicy specifies what will happen to the underlying
+                  external when this managed resource is deleted - either "Delete"
+                  or "Orphan" the external resource. This field is planned to be deprecated
+                  in favor of the ManagementPolicies field in a future release. Currently,
+                  both could be set independently and non-default values would be
+                  honored if the feature flag is enabled. See the design doc for more
+                  information: https://github.com/crossplane/crossplane/blob/499895a25d1a1a0ba1604944ef98ac7a1a71f197/design/design-doc-observe-only-resources.md?plain=1#L223'
+                enum:
+                - Orphan
+                - Delete
+                type: string
+              forProvider:
+                description: DeviceProfileParameters are the configurable fields of
+                  a DeviceProfile.
+                properties:
+                  device_profile:
+                    properties:
+                      abp_rx1_delay:
+                        description: RX1 delay (for ABP).
+                        format: int32
+                        type: integer
+                      abp_rx1_dr_offset:
+                        description: RX1 DR offset (for ABP).
+                        format: int32
+                        type: integer
+                      abp_rx2_dr:
+                        description: RX2 DR (for ABP).
+                        format: int32
+                        type: integer
+                      abp_rx2_freq:
+                        description: RX2 frequency (for ABP, Hz).
+                        format: int32
+                        type: integer
+                      adr_algorithm_id:
+                        description: ADR algorithm ID.
+                        type: string
+                      allow_roaming:
+                        description: "Allow roaming. \n If set to true, it means that
+                          the device is allowed to use roaming."
+                        type: boolean
+                      auto_detect_measurements:
+                        description: Auto-detect measurements. If set to true, measurements
+                          will be automatically added based on the keys of the decoded
+                          payload. In cases where the decoded payload contains random
+                          keys in the data, you want to set this to false.
+                        type: boolean
+                      class_b_ping_slot_dr:
+                        description: Class-B ping-slot DR.
+                        format: int32
+                        type: integer
+                      class_b_ping_slot_freq:
+                        description: Class-B ping-slot freq (Hz).
+                        format: int32
+                        type: integer
+                      class_b_ping_slot_nb_k:
+                        description: "Class-B ping-slots per beacon period. Valid
+                          options are: 0 - 7. \n The actual number of ping-slots per
+                          beacon period equals to 2^k."
+                        format: int32
+                        type: integer
+                      class_b_timeout:
+                        description: Class-B timeout (seconds). This is the maximum
+                          time ChirpStack will wait to receive an acknowledgement
+                          from the device (if requested).
+                        format: int32
+                        type: integer
+                      class_c_timeout:
+                        description: Class-C timeout (seconds). This is the maximum
+                          time ChirpStack will wait to receive an acknowledgement
+                          from the device (if requested).
+                        format: int32
+                        type: integer
+                      description:
+                        description: Description.
+                        type: string
+                      device_status_req_interval:
+                        description: Device-status request interval (times / day).
+                          This defines the times per day that ChirpStack will request
+                          the device-status from the device.
+                        format: int32
+                        type: integer
+                      flush_queue_on_activate:
+                        description: Flush queue on device activation.
+                        type: boolean
+                      id:
+                        description: 'Device-profile ID (UUID). Note: on create this
+                          will be automatically generated.'
+                        type: string
+                      is_relay:
+                        description: Device is a Relay device. Enable this in case
+                          the device is a Relay. A Relay device implements TS011 and
+                          is able to relay data from relay capable devices. See for
+                          more information the TS011 specification.
+                        type: boolean
+                      is_relay_ed:
+                        description: Device is a Relay end-device. Enable this in
+                          case the device is an end-device that can operate under
+                          a Relay. Please refer to the TS011 specification for more
+                          information.
+                        type: boolean
+                      mac_version:
+                        description: LoRaWAN mac-version.
+                        format: int32
+                        type: integer
+                      measurements:
+                        additionalProperties:
+                          properties:
+                            kind:
+                              description: Kind.
+                              format: int32
+                              type: integer
+                            name:
+                              description: Name (user defined).
+                              type: string
+                          type: object
+                        description: Measurements. If defined, ChirpStack will visualize
+                          these metrics in the web-interface.
+                        type: object
+                      name:
+                        description: Name.
+                        type: string
+                      payload_codec_runtime:
+                        description: Payload codec runtime.
+                        format: int32
+                        type: integer
+                      payload_codec_script:
+                        description: Payload codec script.
+                        type: string
+                      reg_params_revision:
+                        description: Regional parameters revision.
+                        format: int32
+                        type: integer
+                      region:
+                        description: Region.
+                        format: int32
+                        type: integer
+                      region_config_id:
+                        description: Region configuration ID. If set, devices will
+                          only use the associated region. If let blank, then devices
+                          will use all regions matching the selected common-name.
+                          Note that multiple region configurations can exist for the
+                          same common-name, e.g. to provide an 8 channel and 16 channel
+                          configuration for the US915 band.
+                        type: string
+                      relay_cad_periodicity:
+                        description: Relay CAD periodicity.
+                        format: int32
+                        type: integer
+                      relay_default_channel_index:
+                        description: Relay default channel index. Valid values are
+                          0 and 1, please refer to the RP002 specification for the
+                          meaning of these values.
+                        format: int32
+                        type: integer
+                      relay_ed_activation_mode:
+                        description: Relay end-device activation mode.
+                        format: int32
+                        type: integer
+                      relay_ed_back_off:
+                        description: Relay end-device back-off (in case it does not
+                          receive WOR ACK frame). 0 = Always send a LoRaWAN uplink
+                          1..63 = Send a LoRaWAN uplink after X WOR frames without
+                          a WOR ACK
+                        format: int32
+                        type: integer
+                      relay_ed_relay_only:
+                        description: End-device only accept data through relay. Only
+                          accept data for this device through a relay. This setting
+                          is useful for testing as in case of a test-setup, the end-device
+                          is usually within range of the gateway.
+                        type: boolean
+                      relay_ed_smart_enable_level:
+                        description: Relay end-device smart-enable level.
+                        format: int32
+                        type: integer
+                      relay_ed_uplink_limit_bucket_size:
+                        description: "Relay end-device uplink limit bucket size. \n
+                          This field indicates the multiplier to determine the bucket
+                          size according to the following formula: BucketSize TOKEN
+                          = _reload_rate x _bucket_size \n Valid values (0 - 3): \n
+                          0 = 1 1 = 2 2 = 4 3 = 12"
+                        format: int32
+                        type: integer
+                      relay_ed_uplink_limit_reload_rate:
+                        description: "Relay end-device uplink limit reload rate. \n
+                          Valid values: - 0 - 62 = X tokens every hour - 63     =
+                          no limitation"
+                        format: int32
+                        type: integer
+                      relay_enabled:
+                        description: Relay must be enabled.
+                        type: boolean
+                      relay_global_uplink_limit_bucket_size:
+                        description: "Relay globak uplink limit bucket size. \n This
+                          field indicates the multiplier to determine the bucket size
+                          according to the following formula: BucketSize TOKEN = _reload_rate
+                          x _bucket_size \n Valid values (0 - 3): \n 0 = 1 1 = 2 2
+                          = 4 3 = 12"
+                        format: int32
+                        type: integer
+                      relay_global_uplink_limit_reload_rate:
+                        description: "Relay global uplink limit reload rate. \n Valid
+                          values: - 0 - 126 = X tokens every hour - 127     = no limitation"
+                        format: int32
+                        type: integer
+                      relay_join_req_limit_bucket_size:
+                        description: "Relay join-request limit bucket size. \n This
+                          field indicates the multiplier to determine the bucket size
+                          according to the following formula: BucketSize TOKEN = _reload_rate
+                          x _bucket_size \n Valid values (0 - 3): \n 0 = 1 1 = 2 2
+                          = 4 3 = 12"
+                        format: int32
+                        type: integer
+                      relay_join_req_limit_reload_rate:
+                        description: "Relay join-request limit reload rate. \n Valid
+                          values: - 0 - 126 = X tokens every hour - 127     = no limitation"
+                        format: int32
+                        type: integer
+                      relay_notify_limit_bucket_size:
+                        description: "Relay notify limit bucket size. \n This field
+                          indicates the multiplier to determine the bucket size according
+                          to the following formula: BucketSize TOKEN = _reload_rate
+                          x _bucket_size \n Valid values (0 - 3): \n 0 = 1 1 = 2 2
+                          = 4 3 = 12"
+                        format: int32
+                        type: integer
+                      relay_notify_limit_reload_rate:
+                        description: "Relay notify limit reload rate. \n Valid values:
+                          - 0 - 126 = X tokens every hour - 127     = no limitation"
+                        format: int32
+                        type: integer
+                      relay_overall_limit_bucket_size:
+                        description: "Relay overall limit bucket size. \n This field
+                          indicates the multiplier to determine the bucket size according
+                          to the following formula: BucketSize TOKEN = _reload_rate
+                          x _bucket_size \n Valid values (0 - 3): \n 0 = 1 1 = 2 2
+                          = 4 3 = 12"
+                        format: int32
+                        type: integer
+                      relay_overall_limit_reload_rate:
+                        description: "Relay overall limit reload rate. \n Valid values:
+                          - 0 - 126 = X tokens every hour - 127     = no limitation"
+                        format: int32
+                        type: integer
+                      relay_second_channel_ack_offset:
+                        description: Relay second channel ACK offset.
+                        format: int32
+                        type: integer
+                      relay_second_channel_dr:
+                        description: Relay second channel DR.
+                        format: int32
+                        type: integer
+                      relay_second_channel_freq:
+                        description: Relay second channel frequency (Hz).
+                        format: int32
+                        type: integer
+                      rx1_delay:
+                        description: "RX1 Delay. \n This makes it possible to override
+                          the system RX1 Delay. Please note that this values only
+                          has effect in case it is higher than the system value. In
+                          other words, it can be used to increase the RX1 Delay but
+                          not to decrease it. Valid options are 1 - 15 (0 = always
+                          use system RX1 Delay)."
+                        format: int32
+                        type: integer
+                      supports_class_b:
+                        description: Supports Class B.
+                        type: boolean
+                      supports_class_c:
+                        description: Supports Class-C.
+                        type: boolean
+                      supports_otaa:
+                        description: Supports OTAA.
+                        type: boolean
+                      tags:
+                        additionalProperties:
+                          type: string
+                        description: Tags (user defined). These tags can be used to
+                          add additional information the the device-profile. These
+                          tags are exposed in all the integration events of devices
+                          using this device-profile.
+                        type: object
+                      tenant_id:
+                        description: Tenant ID (UUID).
+                        type: string
+                      uplink_interval:
+                        description: Uplink interval (seconds). This defines the expected
+                          uplink interval which the device uses for communication.
+                          If the uplink interval has expired and no uplink has been
+                          received, the device is considered inactive.
+                        format: int32
+                        type: integer
+                    type: object
+                required:
+                - device_profile
+                type: object
+              managementPolicies:
+                default:
+                - '*'
+                description: 'THIS IS AN ALPHA FIELD. Do not use it in production.
+                  It is not honored unless the relevant Crossplane feature flag is
+                  enabled, and may be changed or removed without notice. ManagementPolicies
+                  specify the array of actions Crossplane is allowed to take on the
+                  managed and external resources. This field is planned to replace
+                  the DeletionPolicy field in a future release. Currently, both could
+                  be set independently and non-default values would be honored if
+                  the feature flag is enabled. If both are custom, the DeletionPolicy
+                  field will be ignored. See the design doc for more information:
+                  https://github.com/crossplane/crossplane/blob/499895a25d1a1a0ba1604944ef98ac7a1a71f197/design/design-doc-observe-only-resources.md?plain=1#L223
+                  and this one: https://github.com/crossplane/crossplane/blob/444267e84783136daa93568b364a5f01228cacbe/design/one-pager-ignore-changes.md'
+                items:
+                  description: A ManagementAction represents an action that the Crossplane
+                    controllers can take on an external resource.
+                  enum:
+                  - Observe
+                  - Create
+                  - Update
+                  - Delete
+                  - LateInitialize
+                  - '*'
+                  type: string
+                type: array
+              providerConfigRef:
+                default:
+                  name: default
+                description: ProviderConfigReference specifies how the provider that
+                  will be used to create, observe, update, and delete this managed
+                  resource should be configured.
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                  policy:
+                    description: Policies for referencing.
+                    properties:
+                      resolution:
+                        default: Required
+                        description: Resolution specifies whether resolution of this
+                          reference is required. The default is 'Required', which
+                          means the reconcile will fail if the reference cannot be
+                          resolved. 'Optional' means this reference will be a no-op
+                          if it cannot be resolved.
+                        enum:
+                        - Required
+                        - Optional
+                        type: string
+                      resolve:
+                        description: Resolve specifies when this reference should
+                          be resolved. The default is 'IfNotPresent', which will attempt
+                          to resolve the reference only when the corresponding field
+                          is not present. Use 'Always' to resolve the reference on
+                          every reconcile.
+                        enum:
+                        - Always
+                        - IfNotPresent
+                        type: string
+                    type: object
+                required:
+                - name
+                type: object
+              providerRef:
+                description: 'ProviderReference specifies the provider that will be
+                  used to create, observe, update, and delete this managed resource.
+                  Deprecated: Please use ProviderConfigReference, i.e. `providerConfigRef`'
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                  policy:
+                    description: Policies for referencing.
+                    properties:
+                      resolution:
+                        default: Required
+                        description: Resolution specifies whether resolution of this
+                          reference is required. The default is 'Required', which
+                          means the reconcile will fail if the reference cannot be
+                          resolved. 'Optional' means this reference will be a no-op
+                          if it cannot be resolved.
+                        enum:
+                        - Required
+                        - Optional
+                        type: string
+                      resolve:
+                        description: Resolve specifies when this reference should
+                          be resolved. The default is 'IfNotPresent', which will attempt
+                          to resolve the reference only when the corresponding field
+                          is not present. Use 'Always' to resolve the reference on
+                          every reconcile.
+                        enum:
+                        - Always
+                        - IfNotPresent
+                        type: string
+                    type: object
+                required:
+                - name
+                type: object
+              publishConnectionDetailsTo:
+                description: PublishConnectionDetailsTo specifies the connection secret
+                  config which contains a name, metadata and a reference to secret
+                  store config to which any connection details for this managed resource
+                  should be written. Connection details frequently include the endpoint,
+                  username, and password required to connect to the managed resource.
+                properties:
+                  configRef:
+                    default:
+                      name: default
+                    description: SecretStoreConfigRef specifies which secret store
+                      config should be used for this ConnectionSecret.
+                    properties:
+                      name:
+                        description: Name of the referenced object.
+                        type: string
+                      policy:
+                        description: Policies for referencing.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: Resolution specifies whether resolution of
+                              this reference is required. The default is 'Required',
+                              which means the reconcile will fail if the reference
+                              cannot be resolved. 'Optional' means this reference
+                              will be a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: Resolve specifies when this reference should
+                              be resolved. The default is 'IfNotPresent', which will
+                              attempt to resolve the reference only when the corresponding
+                              field is not present. Use 'Always' to resolve the reference
+                              on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  metadata:
+                    description: Metadata is the metadata for connection secret.
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        description: Annotations are the annotations to be added to
+                          connection secret. - For Kubernetes secrets, this will be
+                          used as "metadata.annotations". - It is up to Secret Store
+                          implementation for others store types.
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        description: Labels are the labels/tags to be added to connection
+                          secret. - For Kubernetes secrets, this will be used as "metadata.labels".
+                          - It is up to Secret Store implementation for others store
+                          types.
+                        type: object
+                      type:
+                        description: Type is the SecretType for the connection secret.
+                          - Only valid for Kubernetes Secret Stores.
+                        type: string
+                    type: object
+                  name:
+                    description: Name is the name of the connection secret.
+                    type: string
+                required:
+                - name
+                type: object
+              writeConnectionSecretToRef:
+                description: WriteConnectionSecretToReference specifies the namespace
+                  and name of a Secret to which any connection details for this managed
+                  resource should be written. Connection details frequently include
+                  the endpoint, username, and password required to connect to the
+                  managed resource. This field is planned to be replaced in a future
+                  release in favor of PublishConnectionDetailsTo. Currently, both
+                  could be set independently and connection details would be published
+                  to both without affecting each other.
+                properties:
+                  name:
+                    description: Name of the secret.
+                    type: string
+                  namespace:
+                    description: Namespace of the secret.
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+            required:
+            - forProvider
+            type: object
+          status:
+            description: A DeviceProfileStatus represents the observed state of a
+              DeviceProfile.
+            properties:
+              atProvider:
+                description: DeviceProfileObservation are the observable fields of
+                  a DeviceProfile.
+                properties:
+                  observableField:
+                    type: string
+                type: object
+              conditions:
+                description: Conditions of the resource.
+                items:
+                  description: A Condition that may apply to a resource.
+                  properties:
+                    lastTransitionTime:
+                      description: LastTransitionTime is the last time this condition
+                        transitioned from one status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A Message containing details about this condition's
+                        last transition from one status to another, if any.
+                      type: string
+                    reason:
+                      description: A Reason for this condition's last transition from
+                        one status to another.
+                      type: string
+                    status:
+                      description: Status of this condition; is it currently True,
+                        False, or Unknown?
+                      type: string
+                    type:
+                      description: Type of this condition. At most one of each condition
+                        type may apply to a resource at any point in time.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
