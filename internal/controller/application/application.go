@@ -199,7 +199,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalCreation{}, err
 	}
-	fmt.Printf("Creating application: " + cr.Name + " with Id: " + resp.Id + "\n")
+
 	meta.AddAnnotations(cr, map[string]string{"id": resp.Id})
 	return managed.ExternalCreation{
 		// Optionally return any details that may be required to connect to the
@@ -214,8 +214,6 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotApplication)
 	}
-
-	fmt.Printf("Updating:  " + cr.Name + " with id: " + cr.GetAnnotations()["id"] + "\n")
 
 	app := api.Application{
 		Name:        cr.Spec.ForProvider.Name,
@@ -240,7 +238,6 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotApplication)
 	}
 
-	fmt.Printf("Deleting: " + cr.Name + "\n")
 	svc := c.service.(api.ApplicationServiceClient)
 	deletereq := api.DeleteApplicationRequest{Id: cr.GetAnnotations()["id"]}
 	_, err := svc.Delete(ctx, &deletereq)

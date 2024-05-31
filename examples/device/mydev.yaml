@@ -1,0 +1,13 @@
+apiVersion: core.chirpstack.crossplane.io/v1alpha1
+kind: Device
+metadata:
+  name: device-chirpstack-test
+spec:
+  forProvider:
+    device:
+      application_id: b8775f08-0e81-4df5-be46-2c2d623c20bf
+      dev_eui: "1111111111111111"
+      device_profile_id: ef937d81-9f6f-4f41-8e87-64209df9312a
+      name: crossplane-test
+  providerConfigRef:
+    name: example

@@ -22,7 +22,9 @@ import (
 
 	"github.com/crossplane/provider-chirpstack/internal/controller/application"
 	"github.com/crossplane/provider-chirpstack/internal/controller/config"
+	"github.com/crossplane/provider-chirpstack/internal/controller/device"
 	"github.com/crossplane/provider-chirpstack/internal/controller/deviceprofile"
+
 	"github.com/crossplane/provider-chirpstack/internal/controller/gateway"
 )
 
@@ -34,6 +36,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		application.Setup,
 		gateway.Setup,
 		deviceprofile.Setup,
+		device.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

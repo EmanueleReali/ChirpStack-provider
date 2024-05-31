@@ -161,12 +161,11 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 	svc := c.service.(api.DeviceProfileServiceClient)
 	getResp, err := svc.Get(ctx, &api.GetDeviceProfileRequest{Id: id})
-
 	if err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(IsErrorNotFound, err), "can not get the DeviceProfile instance")
 	}
 
-	fmt.Printf("Observing: " + cr.Name + "\n")
+	cr.Spec.ForProvider.DeviceProfileStruct.Id = getResp.DeviceProfile.Id
 	if !proto.Equal(getResp.DeviceProfile, cr.Spec.ForProvider.DeviceProfileStruct) {
 		return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}, nil
 	}
@@ -179,8 +178,6 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotDeviceProfile)
 	}
-
-	fmt.Printf("Creating: %+v", cr)
 
 	svc := c.service.(api.DeviceProfileServiceClient)
 	resp, err := svc.Create(ctx, &api.CreateDeviceProfileRequest{DeviceProfile: cr.Spec.ForProvider.DeviceProfileStruct})
@@ -201,7 +198,6 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotDeviceProfile)
 	}
 
-	fmt.Printf("Updating: %+v", cr)
 	cr.Spec.ForProvider.DeviceProfileStruct.Id = cr.GetAnnotations()["id"]
 	svc := c.service.(api.DeviceProfileServiceClient)
 	_, err := svc.Update(ctx, &api.UpdateDeviceProfileRequest{DeviceProfile: cr.Spec.ForProvider.DeviceProfileStruct})
@@ -219,7 +215,6 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotDeviceProfile)
 	}
 
-	fmt.Printf("Deleting: %+v", cr)
 	svc := c.service.(api.DeviceProfileServiceClient)
 	_, err := svc.Delete(ctx, &api.DeleteDeviceProfileRequest{Id: cr.GetAnnotations()["id"]})
 	return err
@@ -245,5 +240,4 @@ func IsErrorNotFound(err error) bool {
 		return true
 	}
 	return false
-
 }

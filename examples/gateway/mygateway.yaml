@@ -1,7 +1,7 @@
 apiVersion: core.chirpstack.crossplane.io/v1alpha1
 kind: Gateway
 metadata:
-  name: crossplane-gateway-test
+  name: gateway-chirpstack-test
 spec:
   forProvider:
     name: crossplane-test

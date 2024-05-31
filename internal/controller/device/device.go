@@ -14,16 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package gateway
+package device
 
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"strconv"
 	"strings"
 
+	"github.com/chirpstack/chirpstack/api/go/v4/api"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,15 +40,10 @@ import (
 	"github.com/crossplane/provider-chirpstack/apis/core/v1alpha1"
 	apisv1alpha1 "github.com/crossplane/provider-chirpstack/apis/v1alpha1"
 	"github.com/crossplane/provider-chirpstack/internal/features"
-
-	"github.com/chirpstack/chirpstack/api/go/v4/api"
-	"github.com/chirpstack/chirpstack/api/go/v4/common"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
-	errNotGateway   = "managed resource is not a Gateway custom resource"
+	errNotDevice    = "managed resource is not a Device custom resource"
 	errTrackPCUsage = "cannot track ProviderConfig usage"
 	errGetPC        = "cannot get ProviderConfig"
 	errGetCreds     = "cannot get credentials"
@@ -54,9 +51,9 @@ const (
 	errNewClient = "cannot create new Service"
 )
 
-// Setup adds a controller that reconciles Gateway managed resources.
+// Setup adds a controller that reconciles Device managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.GatewayGroupKind)
+	name := managed.ControllerName(v1alpha1.DeviceGroupKind)
 
 	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
 	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {
@@ -64,11 +61,11 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.GatewayGroupVersionKind),
+		resource.ManagedKind(v1alpha1.DeviceGroupVersionKind),
 		managed.WithExternalConnecter(&connector{
 			kube:         mgr.GetClient(),
 			usage:        resource.NewProviderConfigUsageTracker(mgr.GetClient(), &apisv1alpha1.ProviderConfigUsage{}),
-			newServiceFn: api.NewGatewayServiceClient}),
+			newServiceFn: api.NewDeviceServiceClient}),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
@@ -78,7 +75,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		Named(name).
 		WithOptions(o.ForControllerRuntime()).
 		WithEventFilter(resource.DesiredStateChanged()).
-		For(&v1alpha1.Gateway{}).
+		For(&v1alpha1.Device{}).
 		Complete(ratelimiter.NewReconciler(name, r, o.GlobalRateLimiter))
 }
 
@@ -87,7 +84,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 type connector struct {
 	kube         client.Client
 	usage        resource.Tracker
-	newServiceFn func(cc grpc.ClientConnInterface) api.GatewayServiceClient
+	newServiceFn func(cc grpc.ClientConnInterface) api.DeviceServiceClient
 }
 
 // Connect typically produces an ExternalClient by:
@@ -96,9 +93,9 @@ type connector struct {
 // 3. Getting the credentials specified by the ProviderConfig.
 // 4. Using the credentials to form a client.
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	cr, ok := mg.(*v1alpha1.Gateway)
+	cr, ok := mg.(*v1alpha1.Device)
 	if !ok {
-		return nil, errors.New(errNotGateway)
+		return nil, errors.New(errNotDevice)
 	}
 
 	if err := c.usage.Track(ctx, mg); err != nil {
@@ -146,56 +143,34 @@ type external struct {
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mg.(*v1alpha1.Gateway)
+	cr, ok := mg.(*v1alpha1.Device)
 	if !ok {
-		return managed.ExternalObservation{}, errors.New(errNotGateway)
+		return managed.ExternalObservation{}, errors.New(errNotDevice)
 	}
-
-	svc := c.service.(api.GatewayServiceClient)
-	resp, err := svc.Get(ctx, &api.GetGatewayRequest{GatewayId: cr.Spec.ForProvider.GatewayId})
-
+	if cr.Spec.ForProvider.DeviceStruct.JoinEui == "" {
+		cr.Spec.ForProvider.DeviceStruct.JoinEui = "0000000000000000"
+	}
+	svc := c.service.(api.DeviceServiceClient)
+	getResp, err := svc.Get(ctx, &api.GetDeviceRequest{DevEui: cr.Spec.ForProvider.DeviceStruct.DevEui})
 	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(IsErrorNotFound, err), "can not get the gateway instance")
+		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(IsErrorNotFound, err), "can not get the Device instance")
 	}
 
-	if !reflect.DeepEqual(toGatewayParameters(resp.Gateway), cr.Spec.ForProvider) {
+	if !proto.Equal(getResp.Device, cr.Spec.ForProvider.DeviceStruct) {
 		return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: false}, nil
 	}
-	return managed.ExternalObservation{
-		// Return false when the external resource does not exist. This lets
-		// the managed resource reconciler know that it needs to call Create to
-		// (re)create the resource, or that it has successfully been deleted.
-		ResourceExists: true,
 
-		// Return false when the external resource exists, but it not up to date
-		// with the desired managed resource state. This lets the managed
-		// resource reconciler know that it needs to call Update.
-		ResourceUpToDate: true,
-
-		// Return any details that may be required to connect to the external
-		// resource. These will be stored as the connection secret.
-		ConnectionDetails: managed.ConnectionDetails{},
-	}, nil
+	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
 func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*v1alpha1.Gateway)
+	cr, ok := mg.(*v1alpha1.Device)
 	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotGateway)
+		return managed.ExternalCreation{}, errors.New(errNotDevice)
 	}
-	svc := c.service.(api.GatewayServiceClient)
 
-	gateway := &api.Gateway{
-		Name:          cr.Spec.ForProvider.Name,
-		GatewayId:     cr.Spec.ForProvider.GatewayId,
-		Description:   cr.Spec.ForProvider.Description,
-		Location:      getLocationFromCr(cr.Spec.ForProvider.Location),
-		Tags:          cr.Spec.ForProvider.Tags,
-		Metadata:      cr.Spec.ForProvider.Metadata,
-		StatsInterval: cr.Spec.ForProvider.StatsInterval,
-		TenantId:      cr.Spec.ForProvider.TenantId,
-	}
-	_, err := svc.Create(ctx, &api.CreateGatewayRequest{Gateway: gateway})
+	svc := c.service.(api.DeviceServiceClient)
+	_, err := svc.Create(ctx, &api.CreateDeviceRequest{Device: cr.Spec.ForProvider.DeviceStruct})
 	if err != nil {
 		return managed.ExternalCreation{}, err
 	}
@@ -208,24 +183,13 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mg.(*v1alpha1.Gateway)
+	cr, ok := mg.(*v1alpha1.Device)
 	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotGateway)
+		return managed.ExternalUpdate{}, errors.New(errNotDevice)
 	}
 
-	gateway := &api.Gateway{
-		Name:          cr.Spec.ForProvider.Name,
-		GatewayId:     cr.Spec.ForProvider.GatewayId,
-		Description:   cr.Spec.ForProvider.Description,
-		Location:      getLocationFromCr(cr.Spec.ForProvider.Location),
-		Tags:          cr.Spec.ForProvider.Tags,
-		Metadata:      cr.Spec.ForProvider.Metadata,
-		StatsInterval: cr.Spec.ForProvider.StatsInterval,
-		TenantId:      cr.Spec.ForProvider.TenantId,
-	}
-
-	svc := c.service.(api.GatewayServiceClient)
-	_, err := svc.Update(ctx, &api.UpdateGatewayRequest{Gateway: gateway})
+	svc := c.service.(api.DeviceServiceClient)
+	_, err := svc.Update(ctx, &api.UpdateDeviceRequest{Device: cr.Spec.ForProvider.DeviceStruct})
 	return managed.ExternalUpdate{
 		// Optionally return any details that may be required to connect to the
 		// external resource. These will be stored as the connection secret.
@@ -234,14 +198,13 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
-	cr, ok := mg.(*v1alpha1.Gateway)
+	cr, ok := mg.(*v1alpha1.Device)
 	if !ok {
-		return errors.New(errNotGateway)
+		return errors.New(errNotDevice)
 	}
 
-	svc := c.service.(api.GatewayServiceClient)
-	deletereq := api.DeleteGatewayRequest{GatewayId: cr.Spec.ForProvider.GatewayId}
-	_, err := svc.Delete(ctx, &deletereq)
+	svc := c.service.(api.DeviceServiceClient)
+	_, err := svc.Delete(ctx, &api.DeleteDeviceRequest{DevEui: cr.Spec.ForProvider.DeviceStruct.DevEui})
 	return err
 }
 
@@ -257,37 +220,6 @@ func (a APIToken) RequireTransportSecurity() bool {
 	return false
 }
 
-func getLocationFromCr(locIn v1alpha1.Location) *common.Location {
-	lat, _ := strconv.ParseFloat(locIn.Latitude, 64)
-	lon, _ := strconv.ParseFloat(locIn.Longitude, 64)
-	alt, _ := strconv.ParseFloat(locIn.Altitude, 64)
-	src := common.LocationSource(locIn.Source)
-	acc, _ := strconv.ParseFloat(locIn.Accuracy, 32)
-	return &common.Location{
-		Latitude:  lat,
-		Longitude: lon,
-		Altitude:  alt,
-		Source:    src,
-		Accuracy:  float32(acc),
-	}
-}
-
-func getLocationFromLoc(locIn *common.Location) *v1alpha1.Location {
-	lat := strconv.FormatFloat(locIn.Latitude, 'f', -1, 64)
-	lon := strconv.FormatFloat(locIn.Longitude, 'f', -1, 64)
-	alt := strconv.FormatFloat(locIn.Altitude, 'f', -1, 64)
-	src := locIn.Source
-	acc := strconv.FormatFloat(float64(locIn.Accuracy), 'f', -1, 32)
-	return &v1alpha1.Location{
-		Latitude:  lat,
-		Longitude: lon,
-		Altitude:  alt,
-		Source:    int32(src),
-		Accuracy:  acc,
-	}
-}
-
-// TO MOVE
 func IsErrorNotFound(err error) bool {
 	if err == nil {
 		return false
@@ -297,18 +229,4 @@ func IsErrorNotFound(err error) bool {
 	}
 	return false
 
-}
-
-func toGatewayParameters(in *api.Gateway) v1alpha1.GatewayParameters {
-	out := v1alpha1.GatewayParameters{
-		Name:          in.Name,
-		Description:   in.Description,
-		TenantId:      in.TenantId,
-		Tags:          in.Tags,
-		GatewayId:     in.GatewayId,
-		Location:      *getLocationFromLoc(in.Location),
-		Metadata:      in.Metadata,
-		StatsInterval: in.StatsInterval,
-	}
-	return out
 }
